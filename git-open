@@ -12,7 +12,7 @@ OPTIONS_SPEC="\
 git open [options]
 git open [remote] [branch]
 --
-  Opens the GitHub page for a repo/branch in your browser.
+  Opens the web page for a repo/branch in your browser.
   https://github.com/paulirish/git-open/
 
   Available options are
@@ -207,7 +207,7 @@ elif [[ "${#pathargs[@]}" -ge 3 && ${pathargs[${#pathargs[@]} - 3]} == 'stash' ]
   providerBranchRef="/browse?at=$remote_ref"
   # Hard set the domain here to account for mirror repos (which do not have web access)
   domain="stash.atlassian.com"
-elif [[ "$domain" =~ bitbucket-mirror || "$domain" == stash.atlassian.com ]]; then
+elif [[ ("$domain" =~ bitbucket-mirror || "$domain" == stash.atlassian.com) && $gitprotocol == 'ssh' ]]; then
     if [[ "${pathargs[0]}" =~ ^~ ]]; then
       # This is a user repo
       pathargs=('users' ${pathargs[0]:1} 'repos' "${pathargs[@]:${#pathargs[@]} - 1}")
@@ -218,7 +218,7 @@ elif [[ "$domain" =~ bitbucket-mirror || "$domain" == stash.atlassian.com ]]; th
   providerBranchRef="/browse?at=$remote_ref"
   # Hard set the domain here to account for mirror repos (which do not have web access)
   domain="stash.atlassian.com"
-elif [[ "${#pathargs[@]}" -ge 3 && ${pathargs[${#pathargs[@]} - 3]} == 'scm' ]]; then
+elif [[ $gitprotocol == 'ssh' && "${#pathargs[@]}" -ge 3 && ${pathargs[${#pathargs[@]} - 3]} == 'scm' ]]; then
   # Bitbucket server always has /scm/ as the third to last segment in the url path, e.g. /scm/ppp/test-repo.git
   # Anything before the 'scm' is part of the server's root context
 
@@ -271,7 +271,7 @@ openurl="$protocol://$domain/$urlpath"
 if (( is_commit )); then
     sha=$(git rev-parse HEAD)
     # commits path can be different for the domain
-    if [[ "$domain" == 'bitbucket.org' ]]; then
+    if [[ "$domain" == 'bitbucket.org' || "$domain" == 'stash.atlassian.com' ]]; then
       # bitbucket uses `/commits/...` (plural)
       openurl="$openurl/commits/$sha"
     else
