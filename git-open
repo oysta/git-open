@@ -33,6 +33,12 @@ protocol="https"
 print_only=0
 suffix_flag=""
 
+jsc=/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc
+
+function urlencode() {
+  echo $($jsc -e 'print(encodeURIComponent(arguments[0]));' -- "$1")
+}
+
 while test $# != 0; do
   case "$1" in
   --commit) is_commit=1;;
@@ -192,6 +198,11 @@ else
 fi
 
 if [[ "$domain" == 'bitbucket.org' ]]; then
+  if [[ $remote_ref =~ "/" ]]; then
+    encoded_ref=$(urlencode $remote_ref)
+    sha=$(git rev-parse HEAD)
+    remote_ref="${sha}?at=$encoded_ref"
+  fi
   providerBranchRef="/src/$remote_ref"
 elif [[ "${#pathargs[@]}" -ge 3 && ${pathargs[${#pathargs[@]} - 3]} == 'stash' ]]; then
   # Stash has /stash/ as the third to last segment in the url path, e.g. /stash/ppp/test-repo.git
